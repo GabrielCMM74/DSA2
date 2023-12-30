@@ -1,25 +1,34 @@
-# This is package Class and attributes 
+# This is package Class and attributes
+class Package:
+    # Class variable holding valid statuses for all package instances
+    statuses = ['at_hub', 'en_route', 'delivered']
 
-class Package: 
-    def __init__(self, package_id, address, deadline, city, zipcode, weight, status):
+    def __init__(self, package_id, address, deadline, city, state, zipcode, weight, status, special_notes):
         self.package_id = package_id
-        self.address = address
+        # Format the address for consistency with the address_to_index mapping
+        self.address = address.lower().strip()
         self.deadline = deadline
         self.city = city
+        self.state = state
         self.zipcode = zipcode
         self.weight = weight
-        self.status = status
+        self.status = status if status in self.statuses else 'at_hub'
+        self.special_notes = special_notes
+
 
     def __str__(self):
-        return f"Package {self.package_id} is on route to {self.address} at {self.city} city. The status is {self.status}"
-    
+        # String representation of the package, key information.
+        return f"Package {self.package_id} is on route to {self.address} in {self.city} city. The status is {self.status}"
+
+
     def update_status(self, new_status):
-        
-        statuses = ['at_hub', 'en_route', 'delivered']
-        if new_status in statuses:
+        # Updates the package's status if the new status is correct.
+        if new_status in self.statuses:
             self.status = new_status
         else:
+            # Raises an error if an invalid status is provided.
             raise ValueError(f"{new_status} is an incorrect status")
 
-test = Package(13131, "123 south st", "3:45am", "Bronx", 281044, "44lbs", "en_route")
-print(test.update_status('at_hub'))
+# test = Package(13131, "123 south st", "3:45am", "Bronx", 281044, "44lbs", "en_route")
+# test.update_status('at_hub')
+# print(test)
