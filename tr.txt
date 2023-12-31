@@ -1,0 +1,345 @@
+
+# # Function to create Package objects and insert them into the hash map
+# def parse_time(time_str):
+#     if time_str == 'EOD':
+#         return None  # or use a specific time to represent EOD, like datetime.time(17, 0)
+#     else:
+#         return datetime.datetime.strptime(time_str, '%I:%M %p').time()
+
+
+# # Function to create Package objects and insert them into the hash map
+# # Function to create Package objects and insert them into the hash map
+# def load_packages_into_hashmap(package_data, package_hash_map):
+#     for package in package_data:
+#         package_id = int(package[0])
+#         address = package[1]
+#         city = package[2]
+#         state = package[3]
+#         zipcode = package[4]
+#         deadline_str = package[5]
+
+#         # Parse the deadline string
+#         deadline = parse_time(deadline_str)  # Ensure this returns datetime.time for valid times or None for 'EOD'
+
+#         weight = package[6]
+#         status = "At Hub"  # Default status
+#         special_notes = package[7] if len(package) > 7 else None
+
+#         # Create and insert the package object
+#         package_obj = Package(package_id, address, city, state, zipcode, deadline, weight, status, special_notes, None)
+#         package_hash_map.insert(package_id, package_obj)
+
+# # Initialize trucks with their respective package lists
+# # We create lists of package IDs for each truck
+# ups1_truck_packages = [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]  # Example packages for truck1
+# ups2_truck_packages = [3, 6, 12, 17, 18, 21, 22, 23, 24, 26, 27, 35, 36, 38, 39]  # Example packages for truck2, including those that can only be on truck 2
+# ups3_truck_packages = [2, 4, 5, 6, 7, 8, 9, 10, 11, 25, 28, 32, 33]  # Example delayed packages that arrive at 9:05 am
+
+# # Initialize the truck objects
+# ups1_truck = Truck(truck_id=1, packages=ups1_truck_packages, current_location='4001 south 700 east', start_time='08:00 AM', capacity=16, average_speed=18, mileage=0)
+# ups2_truck = Truck(truck_id=2, packages=ups2_truck_packages, current_location='4001 south 700 east', start_time='10:20 AM', capacity=16, average_speed=18, mileage=0)
+# ups3_truck = Truck(truck_id=3, packages=ups3_truck_packages, current_location='4001 south 700 east', start_time='09:05 AM', capacity=16, average_speed=18, mileage=0)
+
+
+
+# print("Truck 1 starting at:", ups1_truck.current_location.lower().strip())
+# print("Truck 2 starting at:", ups2_truck.current_location.lower().strip())
+# print("Truck 3 starting at:", ups3_truck.current_location.lower().strip())
+
+
+
+# # Since trucks will be loaded manually, we just assign the package lists directly
+# # Load package details into trucks based on the IDs
+# def load_truck_packages(truck, package_hash_map, departure_time):
+#     for package_id in truck.packages:
+#         # print(f"Truck {truck.truck_id} package list before loading: {truck.packages}")
+#         if not isinstance(package_id, int):
+#             raise ValueError(f"Expected package_id to be an integer, got {type(package_id)} with value {package_id}")
+        
+#         package = package_hash_map.lookup(package_id)
+#         # if package:
+#         #     truck.load_package(package)
+#         # else:
+#         #     print(f"Package ID {package_id} not found. Cannot load onto truck {truck.truck_id}.")
+        
+#         # print(f"Truck {truck.truck_id} package list after loading: {truck.packages}")
+
+# truck_departure_times = {
+#     1: datetime.datetime.strptime('08:00 AM', '%I:%M %p'),
+#     2: datetime.datetime.strptime('09:05 AM', '%I:%M %p'),
+#     3: datetime.datetime.strptime('10:20 AM', '%I:%M %p')
+# }
+
+
+# load_packages_into_hashmap(ups_package_data, package_hash_map)
+# # Load packages onto each truck
+# for truck in [ups1_truck, ups2_truck, ups3_truck]:
+#     departure_time = truck_departure_times[truck.truck_id]
+#     load_truck_packages(truck, package_hash_map, departure_time)
+
+
+# def calculate_travel_time(distance, average_speed=18):
+#     # Assuming average_speed is in miles per hour
+#     hours_to_travel = distance / average_speed
+#     return datetime.timedelta(hours=hours_to_travel)
+
+# def find_next_package(packages, distance_matrix, address_to_index, current_location_index, current_time):
+#     next_package = None
+#     minimum_time = datetime.timedelta.max
+
+#     for package in packages:
+#         if package.status != 'delivered':
+#             address_key = package.address.lower().strip()
+#             if address_key not in address_to_index:
+#                 print(f"Warning: Address '{package.address}' not found in address index.")
+#                 continue
+
+#             package_address_index = address_to_index[address_key]
+#             travel_distance = distance_matrix.get((current_location_index, package_address_index)) or \
+#                             distance_matrix.get((package_address_index, current_location_index))
+            
+
+#             if travel_distance is None:
+#                 print(f"Warning: No distance data available for address '{package.address}'.")
+#                 continue
+
+
+#             # Handle 'EOD' represented as None
+#             if isinstance(package.deadline, str):
+#                 if package.deadline == 'EOD':
+#                     package_deadline = datetime.time(17, 0)  # Representing 'EOD' as 5:00 PM
+#                 else:
+#                     package_deadline = datetime.datetime.strptime(package.deadline, '%I:%M %p').time()
+#             else:
+#                 package_deadline = package.deadline
+
+#             travel_time = calculate_travel_time(travel_distance)
+#             arrival_time = current_time + travel_time
+
+#             else:
+#                 deadline_datetime = datetime.datetime.combine(datetime.date(), package.deadline)
+#                 if arrival_time <= deadline_datetime:
+#                     if arrival_time < minimum_time:
+#                         next_package = package
+#                         minimum_time = arrival_time
+
+#     return next_package
+
+
+
+
+# # Add address_to_index as a parameter
+# def prioritize_packages_for_delivery(packages, distances, address_to_index, current_time, current_location):
+#     sorted_packages = []
+#     while packages:
+#         # Now passing address_to_index to find_next_package
+#         next_package = find_next_package(packages, distances, address_to_index, current_location, current_time)
+#         if not next_package:
+#             break  # No more packages can be delivered today
+
+#         sorted_packages.append(next_package)
+#         packages.remove(next_package)
+#         travel_distance = distances.get((current_location, next_package.address)) or \
+#                         distances.get((next_package.address, current_location))
+#         travel_time = calculate_travel_time(travel_distance)
+#         current_time += travel_time
+#         current_location = next_package.address
+#         next_package.status = 'delivered'  # Update package status
+
+#     return sorted_packages
+
+# # Replace your current `create_address_index_mapping` function with this one
+# def create_address_index_mapping(address_data):
+#     address_to_index = {address: index for index, address in enumerate(address_data)}
+#     return address_to_index
+
+# # Call this function after you have loaded the address data
+# address_to_index = create_address_index_mapping(ups_address_data)
+
+
+
+# truck.current_location = truck.current_location.strip().lower()
+# print(address_to_index)  # Replace special_index with a unique integer
+
+
+
+# # Replace special_index with a unique integer
+
+# formatted_hub_address = '4001 South 700 East'.lower().strip()
+# print("Is '4001 south 700 east' in address data?", formatted_hub_address in address_to_index)
+
+
+# # Function to create a distance matrix from the distance data and the address index mapping
+# def create_distance_matrix(distance_data, address_to_index):
+#     # Initialize a dictionary to hold the distances
+#     distance_matrix = {}
+
+#     # Iterate over the distance data to populate the matrix
+#     for i, row in enumerate(distance_data):
+#         # The 'i' index corresponds to the 'from' address
+#         from_address = ups_address_data[i].lower().strip()  # Assuming ups_address_data is loaded as a list of addresses
+
+#         # Check if the 'from' address is in the address_to_index mapping
+#         if from_address in address_to_index:
+#             from_index = address_to_index[from_address]
+
+#             # Iterate over the distances in the row
+#             for j, distance in enumerate(row):
+#                 if distance:  # Check if the distance value is not empty
+#                     # The 'j' index corresponds to the 'to' address
+#                     to_address = ups_address_data[j].lower().strip()
+
+#                     # Check if the 'to' address is in the address_to_index mapping
+#                     if to_address in address_to_index:
+#                         to_index = address_to_index[to_address]
+
+#                         # Add the distance to the matrix using a tuple of the from and to indices
+#                         distance_matrix[(from_index, to_index)] = float(distance)
+#                         # Since the distance is bidirectional, add the reverse as well
+#                         distance_matrix[(to_index, from_index)] = float(distance)
+
+#     return distance_matrix
+
+# # Replace the existing code that creates the distance matrix with this function
+# distance_matrix = create_distance_matrix(ups_distance_data, address_to_index)
+
+
+
+
+
+# # Assuming you have a function to get all packages, modify this as per your implementation
+# def get_all_packages(package_hash_map):
+#     all_packages = []
+#     for bucket in package_hash_map.table:
+#         for package in bucket:
+#             all_packages.append(package)
+#     return all_packages
+
+# # Print out addresses from a few packages to compare with the distance matrix
+# print("Addresses from packages:")
+# for package in get_all_packages(package_hash_map)[:10]:
+#     print(package.address.lower().strip())  # Ensure consistent formatting
+
+
+
+
+# def calculate_distance(from_index, to_index, distance_matrix):
+#     try:
+#         return distance_matrix.get((from_index, to_index)) or distance_matrix.get((to_index, from_index))
+#     except Exception as e:
+#         print(f"Error calculating distance from {from_index} to {to_index}: {e}")
+
+
+# def get_distance(address1, address2, distance_matrix, address_to_index):
+#     index1 = address_to_index[address1]
+#     index2 = address_to_index[address2]
+#     return distance_matrix[index1][index2]
+
+
+# def plan_and_execute_delivery(truck, package_hash_map, distance_matrix, address_to_index):
+#     current_location_index = address_to_index.get(truck.current_location.lower().strip(), -1)
+#     if current_location_index == -1:
+#         print("Error: Current location of the truck is not in the address index.")
+#         return
+    
+#     packages_to_deliver = [package_hash_map.lookup(package_id) for package_id in truck.packages]
+#     current_time = datetime.datetime.now()
+#     delivery_plan = prioritize_packages_for_delivery(packages_to_deliver, distance_matrix, address_to_index, current_time, current_location_index)
+
+#     for package in delivery_plan:
+#             package.update_status('en_route')
+#             address_key = package.address.lower().strip()
+#             package_address_index = address_to_index.get(address_key)
+
+#             # Calculate the distance to the next package
+#             travel_distance = distance_matrix.get((current_location_index, package_address_index)) or \
+#                             distance_matrix.get((package_address_index, current_location_index))
+
+#         # Check if the travel distance is available, print a detailed warning if not
+#             if travel_distance is None:
+#                 print(f"Warning: No distance data available for address '{package.address}'.")
+#                 print(f"Expected index for '{address_key}': {address_to_index.get(address_key)}")
+#                 continue  # Skip this package as we don't have distance data
+#     # Update the truck's status directly
+#     truck.status = 'delivered'
+
+
+# def display_truck_status_and_mileage(trucks):
+#     for truck in trucks:
+#         print(truck)
+
+
+# # Execute delivery for each truck
+# for truck in [ups1_truck, ups2_truck, ups3_truck]:
+#     print(f"Truck {truck.truck_id} starting delivery.")
+#     plan_and_execute_delivery(truck, package_hash_map, distance_matrix, address_to_index)
+
+# # Display the status and mileage of each truck after deliveries
+# display_truck_status_and_mileage([ups1_truck, ups2_truck, ups3_truck])
+
+
+# print("Distance Matrix Keys:", list(distance_matrix.keys())[:10])  # Print the first 10 keys
+# print("Package Addresses:", [p.address.lower().strip() for p in get_all_packages(package_hash_map)])  # Print all package addresses
+
+
+
+
+
+# def query_status(package_hash_map, trucks):
+#     while True:
+#         user_input = input("Hello, This is the UPS Service - Enter 'package' to check a package status, 'truck' to check a truck's status, 'time' to check all packages at a specific time, or 'exit' to quit: ").lower()
+#         total_miles = sum(truck.mileage for truck in trucks)
+#         print(f"Total miles for all deliveries: {total_miles}")
+        
+#         if user_input == 'exit':
+#             # Calculate and print total miles
+#             break
+        
+#         elif user_input == 'truck':
+#             truck_id = input("Enter Truck ID: ")
+#             try:
+#                 truck_id = int(truck_id)
+#                 truck = next((truck for truck in trucks if truck.truck_id == truck_id), None)
+#                 if truck:
+#                     print(f"Truck {truck.truck_id} is currently at {truck.current_location}.")
+#                     print("Packages on this truck:")
+#                     for package_id in truck.packages:
+#                         package = package_hash_map.lookup(package_id)
+#                         if package:
+#                             print(f"Package {package.package_id}: Destination - {package.address}, Status - {package.status}, Special Notes - {package.special_notes}")
+#                 else:
+#                     print("Truck not found.")
+#             except ValueError:
+#                 print("Please enter a valid Truck ID.")
+
+#         elif user_input == 'package':
+#             package_id = input("Enter Package ID: ")
+#             try:
+#                 package_id = int(package_id)
+#                 package = package_hash_map.lookup(package_id)
+#                 if package:
+#                     # Adjust based on actual attributes of your Package class
+#                     print(f"Package {package.package_id}: Destination - {package.address}, Status - {package.status}, Delivery Time - {getattr(package, 'delivery_time', 'Not yet delivered')}")
+#                 else:
+#                     print("Package not found.")
+#             except ValueError:
+#                 print("Please enter a numeric Package ID.")
+
+#         elif user_input == 'time':
+#             time_str = input("Enter the time (HH:MM AM/PM): ")
+#             try:
+#                 specified_time = datetime.datetime.strptime(time_str, '%I:%M %p').time()
+                
+#                 # Simulate delivery up to the specified time
+#                 simulate_delivery_until(specified_time, trucks, package_hash_map)
+
+#                 # Now print the status of all packages at the specified time
+#                 for package in all_packages_from_hashmap(package_hash_map):
+#                     status = package.status_at_time(specified_time)  # You'll need to implement this method
+#                     print(f"Package {package.package_id} status at {time_str}: {status}")
+#             except ValueError:
+#                 print("Invalid time format. Please use HH:MM AM/PM.")
+
+
+# # Call this function to start the UI
+# query_status(package_hash_map, [ups1_truck, ups2_truck, ups3_truck])
