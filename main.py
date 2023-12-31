@@ -31,6 +31,26 @@ ups_package_data = load_csv_data('UPS_Files/UPS_Package_File.csv')
 # Create a package hash map to store Package objects
 package_hash_map = HashMap()
 
+# We create lists of package IDs for each truck
+ups1_truck_packages = [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]  # Example packages for truck1
+ups2_truck_packages = [3, 6, 12, 17, 18, 21, 22, 23, 24, 26, 27, 35, 36, 38, 39]  # Example packages for truck2, including those that can only be on truck 2
+ups3_truck_packages = [2, 4, 5, 6, 7, 8, 9, 10, 11, 25, 28, 32, 33]  # Example delayed packages that arrive at 9:05 am
+
+ups1_truck = Truck(1, 'at_hub', '08:00 AM', '4001 South 700 East', None, None, None, 0, None, ups1_truck_packages, 16, 18, 0)
+ups2_truck = Truck(2, 'at_hub', '10:20 AM', '4001 South 700 East', None, None, None, 0, None, ups2_truck_packages, 16, 18, 0)
+ups3_truck = Truck(3, 'at_hub', '09:05 AM', '4001 South 700 East', None, None, None, 0, None, ups3_truck_packages, 16, 18, 0)
+
+
+trucks = [ups1_truck, ups2_truck, ups3_truck]  # List of your trucks
+
+def determine_truck_id_for_package(package_id):
+    if package_id in ups1_truck_packages:
+        return ups1_truck.truck_id
+    elif package_id in ups2_truck_packages:
+        return ups2_truck.truck_id
+    elif package_id in ups3_truck_packages:
+        return ups3_truck.truck_id
+    return None
 
 def load_package_data(csv_data):
     for package in csv_data:
@@ -58,6 +78,9 @@ def load_package_data(csv_data):
             package_delivery_time
         )
 
+        new_package.truck_id = determine_truck_id_for_package(package_id)  # Add truck association
+        new_package.expected_delivery_time = None  # Placeholder for delivery time
+
         package_hash_map.insert(new_package.package_id, new_package)
         print(f"Loaded package ID: {package_id}, Address: {package[1]}")
 
@@ -71,17 +94,7 @@ load_package_data(ups_package_data)
 
 
 # Initialize trucks with their respective package lists
-# We create lists of package IDs for each truck
-ups1_truck_packages = [1, 13, 14, 15, 16, 19, 20, 29, 30, 31, 34, 37, 40]  # Example packages for truck1
-ups2_truck_packages = [3, 6, 12, 17, 18, 21, 22, 23, 24, 26, 27, 35, 36, 38, 39]  # Example packages for truck2, including those that can only be on truck 2
-ups3_truck_packages = [2, 4, 5, 6, 7, 8, 9, 10, 11, 25, 28, 32, 33]  # Example delayed packages that arrive at 9:05 am
 
-ups1_truck = Truck(1, 'at_hub', '08:00 AM', '4001 South 700 East', None, None, None, 0, None, ups1_truck_packages, 16, 18, 0)
-ups2_truck = Truck(2, 'at_hub', '10:20 AM', '4001 South 700 East', None, None, None, 0, None, ups2_truck_packages, 16, 18, 0)
-ups3_truck = Truck(3, 'at_hub', '09:05 AM', '4001 South 700 East', None, None, None, 0, None, ups3_truck_packages, 16, 18, 0)
-
-
-trucks = [ups1_truck, ups2_truck, ups3_truck]  # List of your trucks
 # Adjusted function to assign packages to trucks
 def assign_packages_to_trucks(trucks, package_hash_map):
     for truck in trucks:
@@ -181,6 +194,9 @@ def deliver_packages(truck, package_hash_map, address_data, distance_data):
         current_time += travel_time_delta
         delivery_time = current_time.strftime('%I:%M %p')
 
+        package.expected_delivery_time = delivery_time  # Set expected delivery time
+
+
         truck.deliver_package(package, delivery_time)
         truck.current_location = package.address
         truck.current_location_index = extract_address_index(package.address, address_data)
@@ -198,42 +214,28 @@ for truck in [ups1_truck, ups2_truck, ups3_truck]:
 
 
 
-def track_package():
-    while True:
-        try:
-            package_id = int(input("Enter the package ID to track (0 to exit): "))
-            if package_id == 0:
-                break
-            package = package_hash_map.lookup(package_id)
-            if package:
-                print(f"Package ID {package_id}: {package}")
-            else:
-                print(f"Package ID {package_id} not found.")
-        except ValueError:
-            print("Please enter a valid package ID.")
+def determine_package_status(package, current_time, trucks):
+    truck_id = package.truck_id  # This assumes that each package has an associated truck_id
+    truck = next((t for t in trucks if t.truck_id == truck_id), None)  # Find the truck for this package
 
-track_package()
+    if truck:
+        truck_start_time = datetime.strptime(truck.start_time, '%I:%M %p')
 
+        if current_time < truck_start_time:
+            return 'at_hub'  # Truck hasn't left yet
 
-def determine_package_status_at_time(package, specified_time, trucks):
-    # Find the truck that delivered this package
-    delivering_truck = None
-    for truck in trucks:
-        if package.package_id in truck.packages:
-            delivering_truck = truck
-            break
-
-    if delivering_truck:
-        truck_start_time = datetime.strptime(delivering_truck.start_time, '%I:%M %p')
-        if specified_time < truck_start_time:
+        if not package.expected_delivery_time:
             return 'at_hub'
-        elif package.delivery_time:
-            delivery_time_obj = datetime.strptime(package.delivery_time, '%I:%M %p')
-            if specified_time < delivery_time_obj:
-                return 'en_route'
-            else:
-                return 'delivered'
-    return 'at_hub'
+
+        expected_delivery_dt = datetime.strptime(package.expected_delivery_time, '%I:%M %p')
+        if truck_start_time <= current_time < expected_delivery_dt:
+            return 'en_route'
+        elif current_time >= expected_delivery_dt:
+            return 'delivered'
+    else:
+        # If no truck is associated with the package, default to 'at_hub'
+        return 'at_hub'
+
 
 def query_status(package_hash_map, trucks):
     print("Western Governors University Parcel Service (WGUPS)")
@@ -253,14 +255,51 @@ def query_status(package_hash_map, trucks):
                 for package_id in range(1, 41):
                     package = package_hash_map.lookup(package_id)
                     if package:
-                        package_status_at_time = determine_package_status_at_time(package, specified_time, trucks)
-                        print(f"Package {package.package_id} status at {time_str}: {package_status_at_time}")
+                        package_status_at_time = determine_package_status(package, specified_time, trucks)
+                        # print(f"Package {package.package_id} status at {time_str}: {package_status_at_time}, Address: {package.address}, City: {package.city}, Zip: {package.zipcode}, Weight: {package.weight}, Deadline: {package.deadline}")
+                        if package_status_at_time == 'delivered':
+                            print(f"Package {package.package_id} status at {time_str}: {package_status_at_time} at {package.delivery_time}, Address: {package.address}, City: {package.city}, State: {package.state}, Zip: {package.zipcode}, Weight: {package.weight}, Deadline: {package.deadline}")
+                        else:
+                            print(f"Package {package.package_id} status at {time_str}: {package_status_at_time}, Address: {package.address}, City: {package.city}, State: {package.state}, Zip: {package.zipcode}, Weight: {package.weight}, Deadline: {package.deadline}")
+
             except ValueError:
                 print("Invalid time format. Please use HH:MM AM/PM.")
 
-        # ... rest of the code ...
+        elif user_input == 'package':
+            package_id = input("Enter Package ID: ")
+            try:
+                package_id = int(package_id)
+                package = package_hash_map.lookup(package_id)
+                if package:
+                    print(f"Package {package.package_id}: Address - {package.address}, City - {package.city}, Zip - {package.zipcode}, Weight - {package.weight}, Status - {package.status}, Deadline - {package.deadline}")
+                else:
+                    print("Package not found.")
+            except ValueError:
+                print("Please enter a numeric Package ID.")
+
+
+print(f"Truck 1 delivery schedule: {ups1_truck.delivery_schedule}")
+
+package1 = package_hash_map.lookup(1)
+print(f"Package 1 status after deliveries: {package1.status}")
+
 
 
 query_status(package_hash_map, trucks)
 
 # Call the UI function at the end of your main.py
+# def track_package():
+#     while True:
+#         try:
+#             package_id = int(input("Enter the package ID to track (0 to exit): "))
+#             if package_id == 0:
+#                 break
+#             package = package_hash_map.lookup(package_id)
+#             if package:
+#                 print(f"Package ID {package_id}: {package}")
+#             else:
+#                 print(f"Package ID {package_id} not found.")
+#         except ValueError:
+#             print("Please enter a valid package ID.")
+
+# track_package()

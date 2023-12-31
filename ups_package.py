@@ -6,13 +6,13 @@ EOD_TIME = '05:00 PM'  # Define End of Day time if not already defined
 class Package:
     statuses = ['at_hub', 'en_route', 'delivered']
 
-    def __init__(self, package_id, address, deadline, city, state, zipcode, weight, status, special_notes, delivery_time):
+    def __init__(self, package_id, address, city, state, zipcode, deadline, weight, status, special_notes, delivery_time):
         self.package_id = package_id
         self.address = address.lower().strip()
-        self.deadline = deadline  # This should be a string in 'HH:MM AM/PM' format or 'EOD'
         self.city = city
         self.state = state
         self.zipcode = zipcode
+        self.deadline = deadline  # This should be a string in 'HH:MM AM/PM' format or 'EOD'
         self.weight = weight
         self.status = status if status in self.statuses else 'at_hub'
         self.special_notes = special_notes
