@@ -28,7 +28,9 @@ class Truck:
     def add_to_delivery_schedule(self, package_id, delivery_time):
             """Adds a package delivery to the truck's delivery schedule."""
             self.delivery_schedule[package_id] = delivery_time
-            print(f"Package ID {package_id} scheduled for delivery at {delivery_time} on truck {self.truck_id}.")
+            # print(f"Updated delivery schedule for Truck {self.truck_id}: {self.delivery_schedule}")
+
+            # print(f"Package ID {package_id} scheduled for delivery at {delivery_time} on truck {self.truck_id}.")
 
     def deliver_package(self, package, delivery_time):
         """Simulates the delivery of a package."""
@@ -37,7 +39,9 @@ class Truck:
             self.add_to_delivery_schedule(package.package_id, delivery_time)  # Add to the delivery schedule
             package.update_status('delivered')  # Update package status
             package.delivery_time = delivery_time  # Log the delivery time
-            print(f"Delivered package ID {package.package_id} at {delivery_time}.")
+            # print(f"Delivered package ID {package.package_id} at {delivery_time}.")
+            # print(f"Truck {self.truck_id} delivering package {package.package_id} at {delivery_time}")
+
         else:
             print(f"Package ID {package.package_id} not found on truck {self.truck_id}.")
 
@@ -53,9 +57,9 @@ class Truck:
 
 
     def update_mileage(self, additional_miles):
-        print(f"Updating mileage for Truck {self.truck_id}. Current mileage: {self.mileage}, Additional: {additional_miles}")
+        # print(f"Updating mileage for Truck {self.truck_id}. Current mileage: {self.mileage}, Additional: {additional_miles}")
         self.mileage += additional_miles
-        print(f"New mileage: {self.mileage}")
+        # print(f"New mileage: {self.mileage}")
 
     def __str__(self):
         return f"Truck {self.truck_id}: {self.status}, {len(self.packages)} packages, Total mileage: {self.mileage} miles"
@@ -64,6 +68,8 @@ class Truck:
         if len(self.packages) < self.capacity:
             # Do NOT append the package object to self.packages
             # Update package status or handle other loading logic here
-            print(f"Loaded package ID {package.package_id} onto truck {self.truck_id}.")
+            # print(f"Loaded package ID {package.package_id} onto truck {self.truck_id}.")
+            pass
         else:
             print(f"Truck {self.truck_id} is full and cannot take package {package.package_id}.")
+
