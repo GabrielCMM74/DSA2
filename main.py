@@ -265,7 +265,4 @@ def query_status(package_hash_map, trucks):
             except ValueError:
                 print("Please enter a numeric Package ID.")
 
-
-
-
 query_status(package_hash_map, trucks)
